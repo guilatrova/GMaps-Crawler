@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from selenium import webdriver
 from selenium.webdriver.remote import webelement
 from webdriver_manager.chrome import ChromeDriverManager
@@ -27,15 +27,21 @@ class Place:
     name: str
     address: str
     business_hours: dict[str, str]
-    extra_attrs: dict[str, str] = {}
+    extra_attrs: dict[str, str] = field(default_factory=lambda: {})
+    traits: dict[str, list[str]] = field(default_factory=lambda: {})
 
 
 class Storage:
-    def save(self):
-
+    def save(self, place: Place):
+        print(place)
 
 
 class GMapsPlacesCrawler:
+    PLACES_PER_SCROLL = 7
+
+    def __init__(self) -> None:
+        self.storage = Storage()
+
     def find_elements_by_attribute(self, tag: str, attr_name: str, attr_value: str) -> list[WebElement]:
         query = f"{tag}[{attr_name}='{attr_value}']"
         elements = driver.find_elements_by_css_selector(query)
@@ -48,7 +54,11 @@ class GMapsPlacesCrawler:
         return self.find_element_by_attribute(tag, "aria-label", attr_value)
 
     def hit_back(self):
-        self.find_element_by_aria_label("button", "Back").click()
+        elements = self.find_elements_by_attribute("button", "aria-label", "Back")
+        for el in elements:
+            if el.is_displayed():
+                el.click()
+                break
 
     def get_places_wrapper(self) -> list[WebElement]:
         search_label = SEARCH.replace("+", " ")
@@ -63,7 +73,7 @@ class GMapsPlacesCrawler:
     def get_places_in_current_page(self):
         idx = 0
         while True:
-            times_to_scroll = int(idx/7)
+            times_to_scroll = int(idx/self.PLACES_PER_SCROLL)
             self.scroll_to_bottom(times_to_scroll)
 
             place_divs_with_dividers = self.get_places_wrapper()
@@ -74,14 +84,12 @@ class GMapsPlacesCrawler:
             selected_div.click()
 
             self.get_place_details()
-
             idx += 1
 
     def wait_restaurant_title_show(self):
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '//h1[text() != ""]'))
         )
-
 
     def get_place_details(self):
         self.wait_restaurant_title_show()
@@ -91,6 +99,7 @@ class GMapsPlacesCrawler:
         regions = self.find_elements_by_attribute("div", "role", "region")
 
         data_wrapper = regions[2]
+        traits_handler = regions[1]
         direct_data_children = data_wrapper.find_elements_by_xpath("*")
 
         address = direct_data_children[0].text
@@ -102,8 +111,21 @@ class GMapsPlacesCrawler:
             key = child.find_elements_by_tag_name("button")[0].get_attribute("aria-label")
             place.extra_attrs[key] = child.text
 
-        # traits_button = regions[1]
+        traits_handler.click()
+        place.traits = self.get_traits()
+
+        self.storage.save(place)
         self.hit_back()
+
+    def get_traits(self) -> dict[str, list[str]]:
+        all_divs = driver.find_element_by_class_name("section-scrollbox").find_elements_by_xpath("*[text() != '']")
+        result = {}
+        for div in all_divs:
+            category, *items = div.text.split("\n")
+            result[category] = items
+
+        self.hit_back()
+        self.wait_restaurant_title_show()
 
     def get_business_hours(self, element: WebElement) -> dict[str, str]:
         all_dates_times = element.text.split("\n")[1:-1]
@@ -113,10 +135,6 @@ class GMapsPlacesCrawler:
         }
 
 
-
-
-
 if __name__ == "__main__":
     crawler = GMapsPlacesCrawler()
     crawler.get_places_in_current_page()
-# section-scrollbox
