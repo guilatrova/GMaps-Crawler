@@ -101,7 +101,7 @@ class GMapsPlacesCrawler:
     def get_places_in_current_page(self):
         idx = 0
         while True:
-            times_to_scroll = int(idx / self.PLACES_PER_SCROLL)
+            times_to_scroll = idx // self.PLACES_PER_SCROLL
             self.scroll_to_bottom(times_to_scroll)
 
             place_divs_with_dividers = self.get_places_wrapper()
