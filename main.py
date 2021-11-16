@@ -15,9 +15,9 @@ import time
 from selenium.webdriver.common.action_chains import ActionChains
 
 
-BASE_URL="https://www.google.com/maps/search/{search}/@-23.9617279,-46.3392223,14z/data=!3m1!4b1?hl=en"
-SEARCH="restaurantes+em+Santos"
-FINAL_URL=BASE_URL.format(search=SEARCH)
+BASE_URL = "https://www.google.com/maps/search/{search}/@-23.9617279,-46.3392223,14z/data=!3m1!4b1?hl=en"
+SEARCH = "restaurantes+em+Santos"
+FINAL_URL = BASE_URL.format(search=SEARCH)
 IMPLICT_WAIT = 5
 
 chrome_options = Options()
@@ -36,6 +36,7 @@ class ExtraRegionChild(IntEnum):
     ADDRESS = 0
     HOURS = 1
     EXTRA_ATTRS_START = 3
+
 
 @dataclass
 class Place:
@@ -100,7 +101,7 @@ class GMapsPlacesCrawler:
     def get_places_in_current_page(self):
         idx = 0
         while True:
-            times_to_scroll = int(idx/self.PLACES_PER_SCROLL)
+            times_to_scroll = int(idx / self.PLACES_PER_SCROLL)
             self.scroll_to_bottom(times_to_scroll)
 
             place_divs_with_dividers = self.get_places_wrapper()
@@ -114,9 +115,7 @@ class GMapsPlacesCrawler:
             idx += 1
 
     def wait_restaurant_title_show(self):
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//h1[text() != ""]'))
-        )
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//h1[text() != ""]')))
 
     def get_place_details(self):
         self.wait_restaurant_title_show()
@@ -181,7 +180,7 @@ class GMapsPlacesCrawler:
         children = region.find_elements_by_xpath("*")
 
         result = {}
-        for child in children[ExtraRegionChild.EXTRA_ATTRS_START:]:
+        for child in children[ExtraRegionChild.EXTRA_ATTRS_START :]:
             key = child.find_elements_by_tag_name("button")[0].get_attribute("aria-label")
             result[key] = child.text
 
@@ -209,10 +208,7 @@ class GMapsPlacesCrawler:
 
         # another possibility, split by TDs:
         # e.g. all_dates_times = [x.text for x in element.find_elements_by_xpath("//tr/*") if x.text]
-        return {
-            all_dates_times[x] : all_dates_times[x+1]
-            for x in range(0, len(all_dates_times), 2)
-        }
+        return {all_dates_times[x]: all_dates_times[x + 1] for x in range(0, len(all_dates_times), 2)}
 
 
 if __name__ == "__main__":
