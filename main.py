@@ -1,3 +1,4 @@
+from enum import IntEnum
 from rich import print
 from rich import inspect
 from dataclasses import dataclass, field
@@ -25,11 +26,22 @@ driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=chrome
 driver.get(FINAL_URL)
 driver.implicitly_wait(IMPLICT_WAIT)
 
+
+class PlaceDetailRegion(IntEnum):
+    TRAITS = 1
+    ADDRESS_EXTRA = 2
+
+
+class ExtraRegionChild(IntEnum):
+    ADDRESS = 0
+    HOURS = 1
+    EXTRA_ATTRS_START = 3
+
 @dataclass
 class Place:
     name: str
     address: str
-    business_hours: dict[str, str]
+    business_hours: dict[str, str] = field(default_factory=lambda: {})
     rate: Optional[str] = None
     reviews: Optional[str] = None
     extra_attrs: dict[str, str] = field(default_factory=lambda: {})
@@ -111,36 +123,41 @@ class GMapsPlacesCrawler:
 
         # DATA
         restaurant_name = self.get_restaurant_name()
+        address = self.get_address()
+        place = Place(restaurant_name, address)
 
-        self.find_element_by_aria_label("img", "Hours").click()
-        driver.find_element_by_xpath("//*[img[contains(@src, 'schedule_gm')]]").click()
-        regions = self.find_elements_by_attribute("div", "role", "region")
-
-        data_wrapper = regions[2]
-        traits_handler = regions[1]
-        direct_data_children = data_wrapper.find_elements_by_xpath("*")
-
-        address = direct_data_children[0].text
-        business_hours = self.get_business_hours(direct_data_children[1])
-
-        place = Place(restaurant_name, address, business_hours)
-
-        for child in direct_data_children[3:]:
-            key = child.find_elements_by_tag_name("button")[0].get_attribute("aria-label")
-            place.extra_attrs[key] = child.text
+        if self.expand_hours():
+            place.business_hours = self.get_business_hours()
 
         # TRAITS
+        place.extra_attrs = self.get_place_extra_attrs()
+        traits_handler = self.get_region(PlaceDetailRegion.TRAITS)
         traits_handler.click()
         place.traits = self.get_traits()
 
         # REVIEWS
         place.rate, place.reviews = self.get_review()
 
-        # PHOTOS?
-
+        # TODO: PHOTOS?
 
         self.storage.save(place)
         self.hit_back()
+
+    def get_region(self, region: PlaceDetailRegion) -> dict[str, str]:
+        """
+        Regions are sections inside the place details, often:
+            0: ActionButtons e.g. Directions / Save
+            1: DeliveryOptions e.g. Takeway / Delivery
+            2: Address
+            3: Popular Times
+        """
+        regions = self.find_elements_by_attribute("div", "role", "region")
+        return regions[region]
+
+    def get_extra_region_child(self, region_child: ExtraRegionChild) -> WebElement:
+        extra_region = self.get_region(PlaceDetailRegion.ADDRESS_EXTRA)
+        children = extra_region.find_elements_by_xpath("*")
+        return children[region_child]
 
     def expand_hours(self) -> bool:
         try:
@@ -153,10 +170,22 @@ class GMapsPlacesCrawler:
             return True
 
     def get_restaurant_name(self) -> str:
-        return driver.find_elements_by_tag_name("h1")[0].text
+        return driver.find_element_by_tag_name("h1").text
 
     def get_address(self) -> str:
-        pass
+        element = self.get_extra_region_child(ExtraRegionChild.ADDRESS)
+        return element.text
+
+    def get_place_extra_attrs(self):
+        region = self.get_region(PlaceDetailRegion.ADDRESS_EXTRA)
+        children = region.find_elements_by_xpath("*")
+
+        result = {}
+        for child in children[ExtraRegionChild.EXTRA_ATTRS_START:]:
+            key = child.find_elements_by_tag_name("button")[0].get_attribute("aria-label")
+            result[key] = child.text
+
+        return result
 
     def get_review(self) -> Tuple[str, str]:
         review_wrapper = driver.find_element_by_xpath("//div[button[contains(text(), 'review')]]")
@@ -174,9 +203,12 @@ class GMapsPlacesCrawler:
         self.wait_restaurant_title_show()
         return result
 
-    def get_business_hours(self, element: WebElement) -> dict[str, str]:
-        # all_dates_times = [x.text for x in element.find_elements_by_xpath("//tr/*") if x.text]
+    def get_business_hours(self) -> dict[str, str]:
+        element = self.get_extra_region_child(ExtraRegionChild.HOURS)
         all_dates_times = element.text.split("\n")[1:-1]
+
+        # another possibility, split by TDs:
+        # e.g. all_dates_times = [x.text for x in element.find_elements_by_xpath("//tr/*") if x.text]
         return {
             all_dates_times[x] : all_dates_times[x+1]
             for x in range(0, len(all_dates_times), 2)
