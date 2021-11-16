@@ -1,4 +1,7 @@
+from rich import print
+from rich import inspect
 from dataclasses import dataclass, field
+from typing import Optional, Tuple
 from selenium import webdriver
 from selenium.webdriver.remote import webelement
 from webdriver_manager.chrome import ChromeDriverManager
@@ -27,13 +30,24 @@ class Place:
     name: str
     address: str
     business_hours: dict[str, str]
+    rate: Optional[str] = None
+    reviews: Optional[str] = None
     extra_attrs: dict[str, str] = field(default_factory=lambda: {})
     traits: dict[str, list[str]] = field(default_factory=lambda: {})
 
 
 class Storage:
     def save(self, place: Place):
-        print(place)
+        print(f"[yellow]{'=' * 100}[/yellow]")
+        inspect(place)
+        # print(f"{place.name=}")
+        # print(f"{place.address=}")
+        # print(f"{place.business_hours=}")
+        # print(f"{place.extra_attrs=}")
+        # print(f"{place.traits=}")
+        # print(f"{place.rate=}")
+        # print(f"{place.reviews=}")
+        print(f"[yellow]{'=' * 100}[/yellow]")
 
 
 class GMapsPlacesCrawler:
@@ -66,6 +80,7 @@ class GMapsPlacesCrawler:
         return wrapper[0].find_elements_by_xpath("*")
 
     def scroll_to_bottom(self, times: int):
+        time.sleep(1)
         for _ in range(times):
             anchor_el = driver.find_element_by_class_name("section-scrollbox").find_element_by_class_name("noprint")
             ActionChains(driver).move_to_element(anchor_el).perform()
@@ -93,9 +108,12 @@ class GMapsPlacesCrawler:
 
     def get_place_details(self):
         self.wait_restaurant_title_show()
-        restaurant_name = driver.find_elements_by_tag_name("h1")[0].text
+
+        # DATA
+        restaurant_name = self.get_restaurant_name()
 
         self.find_element_by_aria_label("img", "Hours").click()
+        driver.find_element_by_xpath("//*[img[contains(@src, 'schedule_gm')]]").click()
         regions = self.find_elements_by_attribute("div", "role", "region")
 
         data_wrapper = regions[2]
@@ -111,11 +129,39 @@ class GMapsPlacesCrawler:
             key = child.find_elements_by_tag_name("button")[0].get_attribute("aria-label")
             place.extra_attrs[key] = child.text
 
+        # TRAITS
         traits_handler.click()
         place.traits = self.get_traits()
 
+        # REVIEWS
+        place.rate, place.reviews = self.get_review()
+
+        # PHOTOS?
+
+
         self.storage.save(place)
         self.hit_back()
+
+    def expand_hours(self) -> bool:
+        try:
+            self.find_element_by_aria_label("img", "Hours").click()
+            # Maybe it's a "complex" view with more data:
+            # driver.find_element_by_xpath("//*[img[contains(@src, 'schedule_gm')]]").click()
+        except Exception:
+            return False
+        else:
+            return True
+
+    def get_restaurant_name(self) -> str:
+        return driver.find_elements_by_tag_name("h1")[0].text
+
+    def get_address(self) -> str:
+        pass
+
+    def get_review(self) -> Tuple[str, str]:
+        review_wrapper = driver.find_element_by_xpath("//div[button[contains(text(), 'review')]]")
+        rate, reviews = review_wrapper.text.split("\n")
+        return rate, reviews
 
     def get_traits(self) -> dict[str, list[str]]:
         all_divs = driver.find_element_by_class_name("section-scrollbox").find_elements_by_xpath("*[text() != '']")
@@ -126,8 +172,10 @@ class GMapsPlacesCrawler:
 
         self.hit_back()
         self.wait_restaurant_title_show()
+        return result
 
     def get_business_hours(self, element: WebElement) -> dict[str, str]:
+        # all_dates_times = [x.text for x in element.find_elements_by_xpath("//tr/*") if x.text]
         all_dates_times = element.text.split("\n")[1:-1]
         return {
             all_dates_times[x] : all_dates_times[x+1]
