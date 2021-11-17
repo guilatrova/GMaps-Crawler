@@ -66,6 +66,7 @@ class Storage:
 
 class GMapsPlacesCrawler:
     PLACES_PER_SCROLL = 7
+    MIN_BUSINESS_HOURS_LENGTH = 3
 
     def __init__(self) -> None:
         self.storage = Storage()
@@ -206,10 +207,18 @@ class GMapsPlacesCrawler:
 
     def get_business_hours(self) -> dict[str, str]:
         element = self.get_extra_region_child(ExtraRegionChild.HOURS)
-        all_dates_times = element.text.split("\n")[1:-1]
 
-        # another possibility, split by TDs:
-        # e.g. all_dates_times = [x.text for x in element.find_elements_by_xpath("//tr/*") if x.text]
+        def get_first_line(raw):
+            return raw.split("\n")[0]
+
+        all_dates_times = [
+            get_first_line(x.text)
+            for x in element.find_elements_by_xpath("//tr/*")
+            if len(x.text) > self.MIN_BUSINESS_HOURS_LENGTH
+        ]
+
+        # another possibility, split by raw text:
+        # all_dates_times = element.text.split("\n")[1:-1]
         return {all_dates_times[x]: all_dates_times[x + 1] for x in range(0, len(all_dates_times), 2)}
 
     def get_image_link(self) -> str:
