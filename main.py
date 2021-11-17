@@ -225,6 +225,10 @@ class GMapsPlacesCrawler:
         cover_img = driver.find_element_by_xpath("//img[@decoding='async']")
         return cover_img.get_property("src")
 
+    def turn_page(self):
+        next_page_arrow = driver.find_element_by_xpath("//button[contains(@aria-label, 'Next page')]")
+        next_page_arrow.click()
+
 
 if __name__ == "__main__":
     crawler = GMapsPlacesCrawler()
