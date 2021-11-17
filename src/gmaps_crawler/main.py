@@ -1,9 +1,7 @@
 import time
-from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Optional, Tuple
+from typing import Tuple
 
-from rich import inspect, print
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
@@ -12,6 +10,9 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
+
+from gmaps_crawler.entities import Place
+from gmaps_crawler.storages import Storage
 
 BASE_URL = "https://www.google.com/maps/search/{search}/@-23.9617279,-46.3392223,14z/data=!3m1!4b1?hl=en"
 SEARCH = "restaurantes+em+Santos"
@@ -34,25 +35,6 @@ class ExtraRegionChild(IntEnum):
     ADDRESS = 0
     HOURS = 1
     EXTRA_ATTRS_START = 3
-
-
-@dataclass
-class Place:
-    name: str
-    address: str
-    business_hours: dict[str, str] = field(default_factory=lambda: {})
-    photo_link: Optional[str] = None
-    rate: Optional[str] = None
-    reviews: Optional[str] = None
-    extra_attrs: dict[str, str] = field(default_factory=lambda: {})
-    traits: dict[str, list[str]] = field(default_factory=lambda: {})
-
-
-class Storage:
-    def save(self, place: Place):
-        print(f"[yellow]{'=' * 100}[/yellow]")
-        inspect(place)
-        print(f"[yellow]{'=' * 100}[/yellow]")
 
 
 def find_elements_by_attribute(tag: str, attr_name: str, attr_value: str) -> list[WebElement]:
