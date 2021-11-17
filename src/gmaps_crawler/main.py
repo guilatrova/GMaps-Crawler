@@ -1,28 +1,21 @@
 import time
 from enum import IntEnum
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 
+from gmaps_crawler.drivers import create_driver
 from gmaps_crawler.entities import Place
 from gmaps_crawler.storages import Storage
 
 BASE_URL = "https://www.google.com/maps/search/{search}/@-23.9617279,-46.3392223,14z/data=!3m1!4b1?hl=en"
 SEARCH = "restaurantes+em+Santos"
 FINAL_URL = BASE_URL.format(search=SEARCH)
-IMPLICT_WAIT = 5
 
-chrome_options = Options()
-# chrome_options.headless = True
-driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=chrome_options)
-driver.get(FINAL_URL)
-driver.implicitly_wait(IMPLICT_WAIT)
+driver = create_driver()
 
 
 class PlaceDetailRegion(IntEnum):
@@ -243,5 +236,6 @@ class GMapsPlacesCrawler:
 
 
 if __name__ == "__main__":
+    driver.get(FINAL_URL)
     crawler = GMapsPlacesCrawler()
     crawler.get_places()
