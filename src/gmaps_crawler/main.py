@@ -51,14 +51,60 @@ def find_element_by_aria_label(tag: str, attr_value: str) -> WebElement:
     return find_element_by_attribute(tag, "aria-label", attr_value)
 
 
-class GMapsPlacesCrawler:
+class GMapsNavigator:
     PLACES_PER_SCROLL = 7
-    MIN_BUSINESS_HOURS_LENGTH = 3
     SECONDS_BEFORE_SCROLL = 1
+
+    def __init__(self) -> None:
+        self.place_idx = 0
+        self.page = 1
+
+    def _get_places_wrapper(self) -> list[WebElement]:
+        search_label = SEARCH.replace("+", " ")
+        wrapper = find_element_by_aria_label("div", f"Results for {search_label}")
+        return wrapper.find_elements(By.XPATH, "*")
+
+    def _scroll_to_bottom(self, times: int):
+        """
+        We need to scroll the list div to bottom to load the next places,
+        it wouldn't work to calculate the index of a div that is not visible (loaded) yet.
+
+        Google Maps displays 7 places at a time.
+        """
+        time.sleep(self.SECONDS_BEFORE_SCROLL)
+
+        for _ in range(times):
+            anchor_el = driver.find_element(By.CLASS_NAME, "section-scrollbox").find_element(By.CLASS_NAME, "noprint")
+            ActionChains(driver).move_to_element(anchor_el).perform()
+
+    def _turn_page(self):
+        next_page_arrow = driver.find_element(By.XPATH, "//button[contains(@aria-label, 'Next page')]")
+        next_page_arrow.click()
+
+    @property
+    def has_next_place(self) -> bool:
+        return True  # TODO: Find out how to decide when to turn page
+
+    def focus_and_get_next_place_element(self) -> WebElement:
+        times_to_scroll = self.place_idx // self.PLACES_PER_SCROLL
+        self._scroll_to_bottom(times_to_scroll)
+
+        place_divs_with_dividers = self._get_places_wrapper()
+        div_idx = self.place_idx * 2
+        selected_div = place_divs_with_dividers[div_idx]
+        self.place_idx += 1
+
+        ActionChains(driver).move_to_element(selected_div).perform()
+        return selected_div
+
+
+class GMapsPlacesCrawler:
+    MIN_BUSINESS_HOURS_LENGTH = 3
     WAIT_SECONDS_RESTAURANT_TITLE = 10
 
     def __init__(self) -> None:
         self.storage = Storage()
+        self.navigator = GMapsNavigator()
 
     def hit_back(self):
         elements = find_elements_by_attribute("button", "aria-label", "Back")
@@ -67,32 +113,12 @@ class GMapsPlacesCrawler:
                 el.click()
                 break
 
-    def get_places_wrapper(self) -> list[WebElement]:
-        search_label = SEARCH.replace("+", " ")
-        wrapper = find_element_by_aria_label("div", f"Results for {search_label}")
-        return wrapper.find_elements(By.XPATH, "*")
-
-    def scroll_to_bottom(self, times: int):
-        time.sleep(self.SECONDS_BEFORE_SCROLL)
-        for _ in range(times):
-            anchor_el = driver.find_element(By.CLASS_NAME, "section-scrollbox").find_element(By.CLASS_NAME, "noprint")
-            ActionChains(driver).move_to_element(anchor_el).perform()
-
     def get_places_in_current_page(self):
-        idx = 0
-        while True:  # TODO: Find out how to decide when to turn page
-            times_to_scroll = idx // self.PLACES_PER_SCROLL
-            self.scroll_to_bottom(times_to_scroll)
-
-            place_divs_with_dividers = self.get_places_wrapper()
-            div_idx = idx * 2
-            selected_div = place_divs_with_dividers[div_idx]
-
-            ActionChains(driver).move_to_element(selected_div).perform()
-            selected_div.click()
+        while self.navigator.has_next_place:
+            place_div = self.navigator.focus_and_get_next_place_element()
+            place_div.click()
 
             self.get_place_details()
-            idx += 1
 
     def wait_restaurant_title_show(self):
         WebDriverWait(driver, self.WAIT_SECONDS_RESTAURANT_TITLE).until(
@@ -202,10 +228,6 @@ class GMapsPlacesCrawler:
     def get_image_link(self) -> str:
         cover_img = driver.find_element(By.XPATH, "//img[@decoding='async']")
         return cover_img.get_property("src")
-
-    def turn_page(self):
-        next_page_arrow = driver.find_element(By.XPATH, "//button[contains(@aria-label, 'Next page')]")
-        next_page_arrow.click()
 
 
 if __name__ == "__main__":
