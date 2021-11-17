@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "Google Maps crawler using Selenium"
 authors = ["Guilherme Latrova <hello@guilatrova.dev>"]
 license = "GPLv3"
+packages = [
+    { include = "gmaps_crawler", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
