@@ -54,19 +54,14 @@ class Storage:
     def save(self, place: Place):
         print(f"[yellow]{'=' * 100}[/yellow]")
         inspect(place)
-        # print(f"{place.name=}")
-        # print(f"{place.address=}")
-        # print(f"{place.business_hours=}")
-        # print(f"{place.extra_attrs=}")
-        # print(f"{place.traits=}")
-        # print(f"{place.rate=}")
-        # print(f"{place.reviews=}")
         print(f"[yellow]{'=' * 100}[/yellow]")
 
 
 class GMapsPlacesCrawler:
     PLACES_PER_SCROLL = 7
     MIN_BUSINESS_HOURS_LENGTH = 3
+    SECONDS_BEFORE_SCROLL = 1
+    WAIT_SECONDS_RESTAURANT_TITLE = 10
 
     def __init__(self) -> None:
         self.storage = Storage()
@@ -95,14 +90,14 @@ class GMapsPlacesCrawler:
         return wrapper[0].find_elements_by_xpath("*")
 
     def scroll_to_bottom(self, times: int):
-        time.sleep(1)
+        time.sleep(self.SECONDS_BEFORE_SCROLL)
         for _ in range(times):
             anchor_el = driver.find_element(By.CLASS_NAME, "section-scrollbox").find_element(By.CLASS_NAME, "noprint")
             ActionChains(driver).move_to_element(anchor_el).perform()
 
     def get_places_in_current_page(self):
         idx = 0
-        while True:
+        while True:  # TODO: Find out how to decide when to turn page
             times_to_scroll = idx // self.PLACES_PER_SCROLL
             self.scroll_to_bottom(times_to_scroll)
 
@@ -117,7 +112,9 @@ class GMapsPlacesCrawler:
             idx += 1
 
     def wait_restaurant_title_show(self):
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//h1[text() != ""]')))
+        WebDriverWait(driver, self.WAIT_SECONDS_RESTAURANT_TITLE).until(
+            EC.presence_of_element_located((By.XPATH, '//h1[text() != ""]'))
+        )
 
     def get_place_details(self):
         self.wait_restaurant_title_show()
@@ -184,7 +181,7 @@ class GMapsPlacesCrawler:
 
         result = {}
         for child in children[ExtraRegionChild.EXTRA_ATTRS_START :]:
-            key = child.find_elements_by_tag_name("button")[0].get_attribute("aria-label")
+            key = child.find_element_by_tag_name("button").get_attribute("aria-label")
             result[key] = child.text
 
         return result
