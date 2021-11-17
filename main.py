@@ -97,7 +97,7 @@ class GMapsPlacesCrawler:
     def scroll_to_bottom(self, times: int):
         time.sleep(1)
         for _ in range(times):
-            anchor_el = driver.find_element_by_class_name("section-scrollbox").find_element_by_class_name("noprint")
+            anchor_el = driver.find_element(By.CLASS_NAME, "section-scrollbox").find_element(By.CLASS_NAME, "noprint")
             ActionChains(driver).move_to_element(anchor_el).perform()
 
     def get_places_in_current_page(self):
@@ -172,7 +172,7 @@ class GMapsPlacesCrawler:
             return True
 
     def get_restaurant_name(self) -> str:
-        return driver.find_element_by_tag_name("h1").text
+        return driver.find_element(By.TAG_NAME, "h1").text
 
     def get_address(self) -> str:
         element = self.get_extra_region_child(ExtraRegionChild.ADDRESS)
@@ -190,12 +190,12 @@ class GMapsPlacesCrawler:
         return result
 
     def get_review(self) -> Tuple[str, str]:
-        review_wrapper = driver.find_element_by_xpath("//div[button[contains(text(), 'review')]]")
+        review_wrapper = driver.find_element(By.XPATH, "//div[button[contains(text(), 'review')]]")
         rate, reviews = review_wrapper.text.split("\n")
         return rate, reviews
 
     def get_traits(self) -> dict[str, list[str]]:
-        all_divs = driver.find_element_by_class_name("section-scrollbox").find_elements_by_xpath("*[text() != '']")
+        all_divs = driver.find_element(By.CLASS_NAME, "section-scrollbox").find_elements(By.XPATH, "*[text() != '']")
         result = {}
         for div in all_divs:
             category, *items = div.text.split("\n")
@@ -222,11 +222,11 @@ class GMapsPlacesCrawler:
         return {all_dates_times[x]: all_dates_times[x + 1] for x in range(0, len(all_dates_times), 2)}
 
     def get_image_link(self) -> str:
-        cover_img = driver.find_element_by_xpath("//img[@decoding='async']")
+        cover_img = driver.find_element(By.XPATH, "//img[@decoding='async']")
         return cover_img.get_property("src")
 
     def turn_page(self):
-        next_page_arrow = driver.find_element_by_xpath("//button[contains(@aria-label, 'Next page')]")
+        next_page_arrow = driver.find_element(By.XPATH, "//button[contains(@aria-label, 'Next page')]")
         next_page_arrow.click()
 
 
