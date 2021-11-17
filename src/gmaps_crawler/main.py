@@ -97,6 +97,15 @@ class GMapsNavigator:
         ActionChains(driver).move_to_element(selected_div).perform()
         return selected_div
 
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> WebElement:
+        if self.has_next_place:
+            return self.focus_and_get_next_place_element()
+
+        raise StopIteration()
+
 
 class GMapsPlacesCrawler:
     MIN_BUSINESS_HOURS_LENGTH = 3
@@ -114,10 +123,8 @@ class GMapsPlacesCrawler:
                 break
 
     def get_places_in_current_page(self):
-        while self.navigator.has_next_place:
-            place_div = self.navigator.focus_and_get_next_place_element()
+        for place_div in self.navigator:
             place_div.click()
-
             self.get_place_details()
 
     def wait_restaurant_title_show(self):
