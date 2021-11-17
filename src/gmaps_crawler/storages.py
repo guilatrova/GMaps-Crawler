@@ -1,4 +1,4 @@
-from rich import inspect
+from rich import inspect, print
 
 from gmaps_crawler.entities import Place
 
