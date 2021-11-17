@@ -1,6 +1,5 @@
 import time
 from enum import IntEnum
-from typing import Tuple
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -202,7 +201,7 @@ class GMapsPlacesCrawler:
 
         return result
 
-    def get_review(self) -> Tuple[str, str]:
+    def get_review(self) -> tuple[str, str]:
         review_wrapper = driver.find_element(By.XPATH, "//div[button[contains(text(), 'review')]]")
         rate, reviews = review_wrapper.text.split("\n")
         return rate, reviews
