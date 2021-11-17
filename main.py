@@ -43,6 +43,7 @@ class Place:
     name: str
     address: str
     business_hours: dict[str, str] = field(default_factory=lambda: {})
+    photo_link: Optional[str] = None
     rate: Optional[str] = None
     reviews: Optional[str] = None
     extra_attrs: dict[str, str] = field(default_factory=lambda: {})
@@ -137,7 +138,8 @@ class GMapsPlacesCrawler:
         # REVIEWS
         place.rate, place.reviews = self.get_review()
 
-        # TODO: PHOTOS?
+        # PHOTOS
+        place.photo_link = self.get_image_link()
 
         self.storage.save(place)
         self.hit_back()
@@ -161,9 +163,9 @@ class GMapsPlacesCrawler:
     def expand_hours(self) -> bool:
         try:
             self.find_element_by_aria_label("img", "Hours").click()
+        except Exception:
             # Maybe it's a "complex" view with more data:
             # driver.find_element_by_xpath("//*[img[contains(@src, 'schedule_gm')]]").click()
-        except Exception:
             return False
         else:
             return True
@@ -209,6 +211,10 @@ class GMapsPlacesCrawler:
         # another possibility, split by TDs:
         # e.g. all_dates_times = [x.text for x in element.find_elements_by_xpath("//tr/*") if x.text]
         return {all_dates_times[x]: all_dates_times[x + 1] for x in range(0, len(all_dates_times), 2)}
+
+    def get_image_link(self) -> str:
+        cover_img = driver.find_element_by_xpath("//img[@decoding='async']")
+        return cover_img.get_property("src")
 
 
 if __name__ == "__main__":
