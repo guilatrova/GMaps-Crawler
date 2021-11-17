@@ -1,19 +1,17 @@
-from enum import IntEnum
-from rich import print
-from rich import inspect
-from dataclasses import dataclass, field
-from typing import Optional, Tuple
-from selenium import webdriver
-from selenium.webdriver.remote import webelement
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import time
-from selenium.webdriver.common.action_chains import ActionChains
+from dataclasses import dataclass, field
+from enum import IntEnum
+from typing import Optional, Tuple
 
+from rich import inspect, print
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 
 BASE_URL = "https://www.google.com/maps/search/{search}/@-23.9617279,-46.3392223,14z/data=!3m1!4b1?hl=en"
 SEARCH = "restaurantes+em+Santos"
@@ -62,8 +60,10 @@ def find_elements_by_attribute(tag: str, attr_name: str, attr_value: str) -> lis
     elements = driver.find_elements(By.CSS_SELECTOR, query)
     return elements
 
+
 def find_element_by_attribute(tag: str, attr_name: str, attr_value: str) -> WebElement:
     return find_elements_by_attribute(tag, attr_name, attr_value)[0]
+
 
 def find_element_by_aria_label(tag: str, attr_value: str) -> WebElement:
     return find_element_by_attribute(tag, "aria-label", attr_value)
@@ -143,7 +143,7 @@ class GMapsPlacesCrawler:
         self.storage.save(place)
         self.hit_back()
 
-    def get_region(self, region: PlaceDetailRegion) -> dict[str, str]:
+    def get_region(self, region: PlaceDetailRegion) -> WebElement:
         """
         Regions are sections inside the place details, often:
             0: ActionButtons e.g. Directions / Save
