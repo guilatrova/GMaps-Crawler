@@ -57,6 +57,18 @@ class Storage:
         print(f"[yellow]{'=' * 100}[/yellow]")
 
 
+def find_elements_by_attribute(tag: str, attr_name: str, attr_value: str) -> list[WebElement]:
+    query = f"{tag}[{attr_name}='{attr_value}']"
+    elements = driver.find_elements(By.CSS_SELECTOR, query)
+    return elements
+
+def find_element_by_attribute(tag: str, attr_name: str, attr_value: str) -> WebElement:
+    return find_elements_by_attribute(tag, attr_name, attr_value)[0]
+
+def find_element_by_aria_label(tag: str, attr_value: str) -> WebElement:
+    return find_element_by_attribute(tag, "aria-label", attr_value)
+
+
 class GMapsPlacesCrawler:
     PLACES_PER_SCROLL = 7
     MIN_BUSINESS_HOURS_LENGTH = 3
@@ -66,19 +78,8 @@ class GMapsPlacesCrawler:
     def __init__(self) -> None:
         self.storage = Storage()
 
-    def find_elements_by_attribute(self, tag: str, attr_name: str, attr_value: str) -> list[WebElement]:
-        query = f"{tag}[{attr_name}='{attr_value}']"
-        elements = driver.find_elements_by_css_selector(query)
-        return elements
-
-    def find_element_by_attribute(self, tag: str, attr_name: str, attr_value: str) -> WebElement:
-        return self.find_elements_by_attribute(tag, attr_name, attr_value)[0]
-
-    def find_element_by_aria_label(self, tag: str, attr_value: str) -> WebElement:
-        return self.find_element_by_attribute(tag, "aria-label", attr_value)
-
     def hit_back(self):
-        elements = self.find_elements_by_attribute("button", "aria-label", "Back")
+        elements = find_elements_by_attribute("button", "aria-label", "Back")
         for el in elements:
             if el.is_displayed():
                 el.click()
@@ -86,8 +87,8 @@ class GMapsPlacesCrawler:
 
     def get_places_wrapper(self) -> list[WebElement]:
         search_label = SEARCH.replace("+", " ")
-        wrapper = driver.find_elements_by_css_selector(f"div[aria-label='Results for {search_label}']")
-        return wrapper[0].find_elements_by_xpath("*")
+        wrapper = find_element_by_aria_label("div", f"Results for {search_label}")
+        return wrapper.find_elements(By.XPATH, "*")
 
     def scroll_to_bottom(self, times: int):
         time.sleep(self.SECONDS_BEFORE_SCROLL)
@@ -150,20 +151,20 @@ class GMapsPlacesCrawler:
             2: Address
             3: Popular Times
         """
-        regions = self.find_elements_by_attribute("div", "role", "region")
+        regions = find_elements_by_attribute("div", "role", "region")
         return regions[region]
 
     def get_extra_region_child(self, region_child: ExtraRegionChild) -> WebElement:
         extra_region = self.get_region(PlaceDetailRegion.ADDRESS_EXTRA)
-        children = extra_region.find_elements_by_xpath("*")
+        children = extra_region.find_elements(By.XPATH, "*")
         return children[region_child]
 
     def expand_hours(self) -> bool:
         try:
-            self.find_element_by_aria_label("img", "Hours").click()
+            find_element_by_aria_label("img", "Hours").click()
         except Exception:
             # Maybe it's a "complex" view with more data:
-            # driver.find_element_by_xpath("//*[img[contains(@src, 'schedule_gm')]]").click()
+            # driver.find_element(By.XPATH, "//*[img[contains(@src, 'schedule_gm')]]").click()
             return False
         else:
             return True
@@ -177,11 +178,11 @@ class GMapsPlacesCrawler:
 
     def get_place_extra_attrs(self):
         region = self.get_region(PlaceDetailRegion.ADDRESS_EXTRA)
-        children = region.find_elements_by_xpath("*")
+        children = region.find_elements(By.XPATH, "*")
 
         result = {}
         for child in children[ExtraRegionChild.EXTRA_ATTRS_START :]:
-            key = child.find_element_by_tag_name("button").get_attribute("aria-label")
+            key = child.find_element(By.TAG_NAME, "button").get_attribute("aria-label")
             result[key] = child.text
 
         return result
@@ -210,7 +211,7 @@ class GMapsPlacesCrawler:
 
         all_dates_times = [
             get_first_line(x.text)
-            for x in element.find_elements_by_xpath("//tr/*")
+            for x in element.find_elements(By.XPATH, "//tr/*")
             if len(x.text) > self.MIN_BUSINESS_HOURS_LENGTH
         ]
 
