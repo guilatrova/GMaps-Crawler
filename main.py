@@ -215,8 +215,6 @@ class GMapsPlacesCrawler:
             if len(x.text) > self.MIN_BUSINESS_HOURS_LENGTH
         ]
 
-        # another possibility, split by raw text:
-        # all_dates_times = element.text.split("\n")[1:-1]
         return {all_dates_times[x]: all_dates_times[x + 1] for x in range(0, len(all_dates_times), 2)}
 
     def get_image_link(self) -> str:
