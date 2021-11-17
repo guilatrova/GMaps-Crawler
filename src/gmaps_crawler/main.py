@@ -121,7 +121,7 @@ class GMapsPlacesCrawler:
                 el.click()
                 break
 
-    def get_places_in_current_page(self):
+    def get_places(self):
         for place_div in self.navigator:
             place_div.click()
             self.get_place_details()
@@ -191,6 +191,12 @@ class GMapsPlacesCrawler:
         return element.text
 
     def get_place_extra_attrs(self):
+        """
+        May contain many random attributes, some are common like:
+        - web address
+        - phone number
+        - plus code
+        """
         region = self.get_region(PlaceDetailRegion.ADDRESS_EXTRA)
         children = region.find_elements(By.XPATH, "*")
 
@@ -238,4 +244,4 @@ class GMapsPlacesCrawler:
 
 if __name__ == "__main__":
     crawler = GMapsPlacesCrawler()
-    crawler.get_places_in_current_page()
+    crawler.get_places()
