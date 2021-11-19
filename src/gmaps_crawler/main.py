@@ -54,7 +54,7 @@ class GMapsNavigator:
     def _get_places_wrapper(self) -> list[WebElement]:
         search_label = SEARCH.replace("+", " ")
         wrapper = find_element_by_aria_label("div", f"Results for {search_label}")
-        return wrapper.find_elements(By.XPATH, "*")
+        return [el for el in wrapper.find_elements(By.XPATH, "*") if el.is_displayed()]
 
     def _scroll_to_bottom(self, times: int):
         """
