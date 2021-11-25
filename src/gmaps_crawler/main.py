@@ -2,7 +2,6 @@ import logging
 import time
 from enum import IntEnum
 
-from rich import print
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -19,6 +18,7 @@ SEARCH = "restaurantes+em+Santos"
 FINAL_URL = BASE_URL.format(search=SEARCH)
 
 driver = create_driver()
+logger = logging.getLogger(__name__)
 
 
 class PlaceDetailRegion(IntEnum):
@@ -89,6 +89,8 @@ class GMapsNavigator:
         selected_div = place_divs_with_dividers[div_idx]
         self.place_idx += 1
 
+        logger.info("Crawling place n%d", self.place_idx)
+
         ActionChains(driver).move_to_element(selected_div).perform()
         return selected_div
 
@@ -132,6 +134,8 @@ class GMapsPlacesCrawler:
 
         # DATA
         restaurant_name = self.get_restaurant_name()
+        logger.info("Crawling data for restaurant %s", restaurant_name)
+
         address = self.get_address()
         place = Place(restaurant_name, address)
 
@@ -150,6 +154,7 @@ class GMapsPlacesCrawler:
         # PHOTOS
         place.photo_link = self.get_image_link()
 
+        logger.info("Storing place ")
         self.storage.save(place)
         self.hit_back()
 
@@ -239,9 +244,8 @@ class GMapsPlacesCrawler:
 
 
 if __name__ == "__main__":
-    print("[bold yellow]== * Running Gmaps Crawler ==[/bold yellow]")
-    print(f"[yellow]Settings: [/yellow] {settings.dict()}")
-    logging.getLogger(__name__).info("teste")
+    logger.info("[bold yellow]== * Running Gmaps Crawler ==[/]", extra={"markup": True})
+    logger.info("[yellow]Settings:[/yellow] %s", settings.dict(), extra={"markup": True})
 
     driver.get(FINAL_URL)
     crawler = GMapsPlacesCrawler()
