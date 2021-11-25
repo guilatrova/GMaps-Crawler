@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from typing import TypedDict
 
 import boto3
@@ -29,7 +30,8 @@ class SQSEmitter:
             raise CantEmitPlace(place, self.queue_url) from ex
 
     def _create_message(self, place: Place) -> SQSMessageFormat:
-        return dict(body="", attributes=dict(place_id=""))
+        body = str(asdict(place))
+        return dict(body=body, attributes=dict(place_id=place.identifier))
 
     def _send_message(self, message: SQSMessageFormat) -> SendMessageResultTypeDef:
         response = self.client.send_message(

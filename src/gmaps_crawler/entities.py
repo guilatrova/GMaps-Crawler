@@ -12,3 +12,7 @@ class Place:
     reviews: Optional[str] = None
     extra_attrs: dict[str, str] = field(default_factory=lambda: {})
     traits: dict[str, list[str]] = field(default_factory=lambda: {})
+
+    @property
+    def identifier(self) -> str:
+        return ""
