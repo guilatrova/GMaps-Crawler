@@ -2,7 +2,7 @@ from abc import ABC, abstractclassmethod
 
 from rich import inspect, print
 
-from gmaps_crawler.config import settings
+from gmaps_crawler.config import StorageMode, settings
 from gmaps_crawler.entities import Place
 
 
@@ -20,7 +20,7 @@ class DebugStorage(BaseStorage):
 
 
 def get_storage() -> BaseStorage:
-    if settings.STORAGE_MODE.upper() == "DEBUG":
+    if settings.STORAGE_MODE == StorageMode.DEBUG:
         return DebugStorage()
 
     raise ValueError(f"{settings.STORAGE_MODE} is unknown")
