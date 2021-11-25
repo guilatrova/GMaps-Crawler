@@ -13,12 +13,14 @@ python = "^3.9"
 webdriver-manager = "^3.5.2"
 selenium = "^4.0.0"
 pydantic = "^1.8.2"
+boto3 = "^1.20.13"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.15.0"
 pytest = "^6.2.5"
 rich = "^10.14.0"
 cryptography = "36.0.0"
+boto3-stubs = {extras = ["sqs"], version = "^1.20.13"}
 
 [tool.black]
 line-length = 120
