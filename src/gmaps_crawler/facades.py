@@ -8,13 +8,9 @@ from gmaps_crawler.entities import Place
 from gmaps_crawler.exceptions import CantEmitPlace
 
 
-class SQSMessageAttributeFormat(TypedDict):
-    place_id: str
-
-
 class SQSMessageFormat(TypedDict):
     body: str
-    attributes: SQSMessageAttributeFormat
+    attributes: dict
 
 
 class SQSEmitter:
@@ -31,7 +27,15 @@ class SQSEmitter:
 
     def _create_message(self, place: Place) -> SQSMessageFormat:
         body = str(asdict(place))
-        return dict(body=body, attributes=dict(place_id=place.identifier))
+        return dict(
+            body=body,
+            attributes=dict(
+                place_id={
+                    "DataType": "String",
+                    "StringValue": place.identifier,
+                }
+            ),
+        )
 
     def _send_message(self, message: SQSMessageFormat) -> SendMessageResultTypeDef:
         response = self.client.send_message(
