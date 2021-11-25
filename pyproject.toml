@@ -17,6 +17,7 @@ selenium = "^4.0.0"
 pre-commit = "^2.15.0"
 pytest = "^6.2.5"
 rich = "^10.14.0"
+cryptography = "36.0.0"
 
 [tool.black]
 line-length = 120
