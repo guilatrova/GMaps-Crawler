@@ -14,5 +14,9 @@ class Place:
     traits: dict[str, list[str]] = field(default_factory=lambda: {})
 
     @property
-    def identifier(self) -> str:
-        return ""
+    def identifier(self) -> Optional[str]:
+        for attr_key, val in self.extra_attrs.items():
+            if attr_key.startswith("Plus code"):
+                return val
+
+        return None
