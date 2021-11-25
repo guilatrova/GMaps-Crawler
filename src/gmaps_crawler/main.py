@@ -1,12 +1,14 @@
 import time
 from enum import IntEnum
 
+from rich import print
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from gmaps_crawler.config import settings
 from gmaps_crawler.drivers import create_driver
 from gmaps_crawler.entities import Place
 from gmaps_crawler.storages import get_storage
@@ -236,6 +238,9 @@ class GMapsPlacesCrawler:
 
 
 if __name__ == "__main__":
+    print("[bold yellow]== * Running Gmaps Crawler ==[/bold yellow]")
+    print(f"[yellow]Settings: [/yellow] {settings.dict()}")
+
     driver.get(FINAL_URL)
     crawler = GMapsPlacesCrawler()
     crawler.get_places()
