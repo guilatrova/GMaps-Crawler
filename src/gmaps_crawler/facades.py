@@ -4,6 +4,7 @@ import boto3
 from mypy_boto3_sqs.type_defs import SendMessageResultTypeDef
 
 from gmaps_crawler.entities import Place
+from gmaps_crawler.exceptions import CantEmitPlace
 
 
 class SQSMessageAttributeFormat(TypedDict):
@@ -21,8 +22,11 @@ class SQSEmitter:
         self.queue_url = queue_url
 
     def emit(self, place: Place):
-        message = self._create_message(place)
-        self._send_message(message)
+        try:
+            message = self._create_message(place)
+            self._send_message(message)
+        except Exception as ex:
+            raise CantEmitPlace(place, self.queue_url) from ex
 
     def _create_message(self, place: Place) -> SQSMessageFormat:
         return dict(body="", attributes=dict(place_id=""))
