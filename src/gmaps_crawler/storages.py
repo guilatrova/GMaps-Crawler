@@ -19,8 +19,16 @@ class DebugStorage(BaseStorage):
         print(f"[yellow]{'=' * 100}[/yellow]")
 
 
+class SqsStorage(BaseStorage):
+    def save(self, place: Place):
+        return super().save(place)
+
+
 def get_storage() -> BaseStorage:
     if settings.STORAGE_MODE == StorageMode.DEBUG:
         return DebugStorage()
+
+    if settings.STORAGE_MODE == StorageMode.SQS:
+        return SqsStorage()
 
     raise ValueError(f"{settings.STORAGE_MODE} is unknown")

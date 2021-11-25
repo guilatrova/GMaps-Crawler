@@ -5,6 +5,7 @@ from pydantic import BaseSettings
 
 class StorageMode(Enum):
     DEBUG = "DEBUG"
+    SQS = "SQS"
 
 
 class Settings(BaseSettings):
