@@ -1,3 +1,4 @@
+import logging
 import time
 from enum import IntEnum
 
@@ -240,6 +241,7 @@ class GMapsPlacesCrawler:
 if __name__ == "__main__":
     print("[bold yellow]== * Running Gmaps Crawler ==[/bold yellow]")
     print(f"[yellow]Settings: [/yellow] {settings.dict()}")
+    logging.getLogger(__name__).info("teste")
 
     driver.get(FINAL_URL)
     crawler = GMapsPlacesCrawler()
