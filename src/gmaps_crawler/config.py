@@ -2,7 +2,7 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    pass
+    STORAGE_MODE: str = "DEBUG"
 
 
 settings = Settings()

@@ -9,7 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from gmaps_crawler.drivers import create_driver
 from gmaps_crawler.entities import Place
-from gmaps_crawler.storages import Storage
+from gmaps_crawler.storages import get_storage
 
 BASE_URL = "https://www.google.com/maps/search/{search}/@-23.9617279,-46.3392223,14z/data=!3m1!4b1?hl=en"
 SEARCH = "restaurantes+em+Santos"
@@ -104,7 +104,7 @@ class GMapsPlacesCrawler:
     WAIT_SECONDS_RESTAURANT_TITLE = 10
 
     def __init__(self) -> None:
-        self.storage = Storage()
+        self.storage = get_storage()
         self.navigator = GMapsNavigator()
 
     def hit_back(self):
