@@ -89,7 +89,7 @@ class GMapsNavigator:
         selected_div = place_divs_with_dividers[div_idx]
         self.place_idx += 1
 
-        logger.info("Crawling place n%d", self.place_idx)
+        logger.info("Crawling place n #%03d", self.place_idx)
 
         ActionChains(driver).move_to_element(selected_div).perform()
         return selected_div

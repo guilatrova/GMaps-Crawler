@@ -21,7 +21,7 @@ class DebugStorage(BaseStorage):
         print(f"[yellow]{'=' * 100}[/yellow]")
 
 
-class SqsStorage(DebugStorage):
+class SqsStorage(BaseStorage):
     def __init__(self) -> None:
         if not settings.SCRAPED_EVENT_SQS_URL:
             raise MissingEnvVariable("SCRAPED_EVENT_SQS_URL")
@@ -29,7 +29,6 @@ class SqsStorage(DebugStorage):
         self.emitter = SQSEmitter(settings.SCRAPED_EVENT_SQS_URL)
 
     def save(self, place: Place):
-        super().save(place)
         self.emitter.emit(place)
 
 

@@ -1,3 +1,4 @@
+import logging
 from dataclasses import asdict
 from typing import TypedDict
 
@@ -6,6 +7,8 @@ from mypy_boto3_sqs.type_defs import SendMessageResultTypeDef
 
 from gmaps_crawler.entities import Place
 from gmaps_crawler.exceptions import CantEmitPlace
+
+logger = logging.getLogger(__name__)
 
 
 class SQSMessageFormat(TypedDict):
@@ -23,7 +26,10 @@ class SQSEmitter:
             message = self._create_message(place)
             self._send_message(message)
         except Exception as ex:
+            logger.exception("[red]Failed to emit place[/] %s to SQS", place, extra={"markup": True})
             raise CantEmitPlace(place, self.queue_url) from ex
+        else:
+            logger.info("Emitted place %s to SQS", place)
 
     def _create_message(self, place: Place) -> SQSMessageFormat:
         body = str(asdict(place))
