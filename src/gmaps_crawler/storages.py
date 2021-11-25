@@ -4,6 +4,7 @@ from rich import inspect, print
 
 from gmaps_crawler.config import StorageMode, settings
 from gmaps_crawler.entities import Place
+from gmaps_crawler.exceptions import MissingEnvVariable
 
 
 class BaseStorage(ABC):
@@ -20,6 +21,10 @@ class DebugStorage(BaseStorage):
 
 
 class SqsStorage(BaseStorage):
+    def __init__(self) -> None:
+        if not settings.SCRAPED_EVENT_SQS_URL:
+            raise MissingEnvVariable("SCRAPED_EVENT_SQS_URL")
+
     def save(self, place: Place):
         return super().save(place)
 

@@ -10,6 +10,7 @@ class StorageMode(Enum):
 
 class Settings(BaseSettings):
     STORAGE_MODE: StorageMode = StorageMode.DEBUG
+    SCRAPED_EVENT_SQS_URL: str = ""
 
     class Config:
         env_file = ".env"
